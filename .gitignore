@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.superpowers/
+uploads/
+*.db
+*.db-journal
+.env
