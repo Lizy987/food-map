@@ -1,0 +1,104 @@
+<h2>美食地图 — 页面结构与路由</h2>
+<p class="subtitle">移动端 H5 / MVP 五页面</p>
+
+<div class="section">
+  <h3>路由设计</h3>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr;gap:20px;max-width:680px;margin:0 auto;">
+
+  <!-- 首页 -->
+  <div style="border:2px solid #3b82f6;border-radius:12px;padding:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <span class="label" style="color:#3b82f6;">GET /</span>
+        <h3 style="margin:4px 0;">🏠 首页 — 发现美食</h3>
+      </div>
+      <span style="background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:12px;font-size:0.8em;">核心页面</span>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:12px;">
+      <div style="flex:1;background:#f1f5f9;border-radius:8px;padding:12px;text-align:center;">
+        <div class="label" style="font-size:0.75em;">🗺️ 地图区域 (60%)</div>
+        <div style="font-size:0.8em;color:#64748b;">高德地图，标记点展示已审核美食<br>拖动/缩放加载新区域<br>点击标记 → 跳转详情</div>
+      </div>
+      <div style="flex:1;background:#f1f5f9;border-radius:8px;padding:12px;text-align:center;">
+        <div class="label" style="font-size:0.75em;">📋 列表区域 (40%)</div>
+        <div style="font-size:0.8em;color:#64748b;">附近美食卡片列表<br>按距离/时间排序<br>分类标签快速筛选<br>与地图区域联动滚动</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <span style="font-size:0.8em;color:#64748b;">底部 Tab：</span>
+      <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:0.75em;">发现</span>
+      <span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;font-size:0.75em;">上传</span>
+      <span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:4px;font-size:0.75em;">我的</span>
+    </div>
+  </div>
+
+  <!-- 上传页 -->
+  <div style="border:2px solid #10b981;border-radius:12px;padding:20px;">
+    <div>
+      <span class="label" style="color:#10b981;">GET /upload</span>
+      <h3 style="margin:4px 0;">📸 上传美食</h3>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;font-size:0.85em;color:#334155;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#d1fae5;padding:2px 8px;border-radius:4px;">1</span> 拍照或选择照片（压缩后上传）
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#d1fae5;padding:2px 8px;border-radius:4px;">2</span> 填写菜名、选择分类、简短描述
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#d1fae5;padding:2px 8px;border-radius:4px;">3</span> 自动定位 → 可手动调整 → 确认地址
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#d1fae5;padding:2px 8px;border-radius:4px;">4</span> 提交 → 提示"等待审核" → 回到首页
+      </div>
+    </div>
+  </div>
+
+  <!-- 详情页 -->
+  <div style="border:2px solid #f59e0b;border-radius:12px;padding:20px;">
+    <div>
+      <span class="label" style="color:#f59e0b;">GET /food/:id</span>
+      <h3 style="margin:4px 0;">🍜 美食详情</h3>
+    </div>
+    <div style="font-size:0.85em;color:#334155;margin-top:8px;">
+      食物大图 → 标题/分类/描述 → 上传者信息 → 小地图显示位置 → "去这里"导航按钮
+    </div>
+  </div>
+
+  <!-- 审核页 -->
+  <div style="border:2px solid #ef4444;border-radius:12px;padding:20px;">
+    <div>
+      <span class="label" style="color:#ef4444;">GET /admin/review</span>
+      <h3 style="margin:4px 0;">🛡️ 审核后台</h3>
+    </div>
+    <div style="font-size:0.85em;color:#334155;margin-top:8px;">
+      待审核列表（按时间倒序）→ 查看图片/信息 → 通过 ✅ / 拒绝 ❌ + 备注 → 刷新列表
+    </div>
+  </div>
+
+  <!-- 我的 -->
+  <div style="border:2px solid #8b5cf6;border-radius:12px;padding:20px;">
+    <div>
+      <span class="label" style="color:#8b5cf6;">GET /profile</span>
+      <h3 style="margin:4px 0;">👤 我的</h3>
+    </div>
+    <div style="font-size:0.85em;color:#334155;margin-top:8px;">
+      头像/昵称 → 我上传的美食列表（含审核状态）→ 统计：共上传 X 篇，Y 篇通过
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>路由表一览</h3>
+  <table style="width:100%;font-size:0.85em;border-collapse:collapse;">
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px;"><code>GET /</code></td><td>首页（地图+列表）</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px;"><code>GET /upload</code></td><td>上传美食页</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px;"><code>GET /food/:id</code></td><td>美食详情页</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px;"><code>GET /profile</code></td><td>个人中心</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px;"><code>GET /admin/review</code></td><td>审核后台</td></tr>
+    <tr><td style="padding:8px;"><code>GET /login</code></td><td>微信授权登录</td></tr>
+  </table>
+</div>

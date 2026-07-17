@@ -1,0 +1,118 @@
+<h2>美食地图 — 核心流程</h2>
+<p class="subtitle">上传 → 审核 → 展示 / 边界情况处理</p>
+
+<div class="section">
+  <h3>流程一：用户上传美食</h3>
+</div>
+
+<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;max-width:700px;margin:0 auto;font-size:0.9em;">
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <div style="background:#3b82f6;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;">1</div>
+    <div style="flex:1;">
+      <strong>打开上传页</strong>
+      <span style="color:#64748b;margin-left:8px;">需要登录 → 未登录则跳转微信授权</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <div style="background:#3b82f6;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;">2</div>
+    <div style="flex:1;">
+      <strong>拍照/选择照片</strong>
+      <span style="color:#64748b;margin-left:8px;">前端压缩至 ≤ 1MB，预览确认</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <div style="background:#3b82f6;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;">3</div>
+    <div style="flex:1;">
+      <strong>填写信息</strong>
+      <span style="color:#64748b;margin-left:8px;">菜名（必填）+ 分类（下拉选）+ 描述（选填）</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <div style="background:#3b82f6;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;">4</div>
+    <div style="flex:1;">
+      <strong>确认位置</strong>
+      <span style="color:#64748b;margin-left:8px;">自动获取 GPS → 地图上可拖动微调 → 显示地址文本</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div style="background:#3b82f6;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;">5</div>
+    <div style="flex:1;">
+      <strong>提交</strong>
+      <span style="color:#64748b;margin-left:8px;">图片先上传 → 拿 URL → 提交帖子 → 状态 = pending → 提示"审核中"</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3>流程二：审核机制（先审后发）</h3>
+</div>
+
+<div style="max-width:700px;margin:0 auto;text-align:center;">
+
+  <div style="display:flex;align-items:center;justify-content:center;gap:0;font-size:0.85em;margin-bottom:16px;">
+    <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px 20px;">
+      📥 <strong>pending</strong><br><span style="color:#92400e;">待审核</span>
+    </div>
+    <div style="font-size:1.5em;padding:0 12px;">→</div>
+    <div style="background:#d1fae5;border:2px solid #10b981;border-radius:10px;padding:12px 20px;">
+      ✅ <strong>approved</strong><br><span style="color:#065f46;">已通过 → 地图展示</span>
+    </div>
+    <div style="font-size:1.5em;padding:0 12px;">↘</div>
+    <div style="background:#fee2e2;border:2px solid #ef4444;border-radius:10px;padding:12px 20px;">
+      ❌ <strong>rejected</strong><br><span style="color:#991b1b;">已拒绝 → 仅上传者可见</span>
+    </div>
+  </div>
+
+  <div style="background:#f1f5f9;border-radius:8px;padding:16px;text-align:left;font-size:0.85em;">
+    <strong>审核后台操作：</strong><br>
+    • 管理员登录 → 查看待审核列表（按时间倒序）<br>
+    • 查看图片、标题、分类、位置信息<br>
+    • 点击"通过" → 帖子立即在地图上可见<br>
+    • 点击"拒绝" → 填写原因（选填）→ 通知上传者<br>
+    • MVP 阶段：简单 HTTP Basic Auth 保护审核页
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px;">
+  <h3>边界情况处理</h3>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:700px;margin:0 auto;font-size:0.85em;">
+
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+    <strong>🚫 图片过大</strong>
+    <p style="color:#64748b;margin:4px 0 0;">前端压缩到 ≤ 1MB，超过则弹提示"图片过大，请重新选择"</p>
+  </div>
+
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+    <strong>📍 定位失败</strong>
+    <p style="color:#64748b;margin:4px 0 0;">提示用户手动在地图上选点，输入地址关键词搜索</p>
+  </div>
+
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+    <strong>🌐 网络异常</strong>
+    <p style="color:#64748b;margin:4px 0 0;">上传/提交失败时显示 toast 错误提示，支持重试</p>
+  </div>
+
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+    <strong>🗺️ 地图无数据</strong>
+    <p style="color:#64748b;margin:4px 0 0;">当前区域无美食时显示空状态："这片区域还没有人分享美食，来做第一个吧！"</p>
+  </div>
+
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+    <strong>📭 空列表</strong>
+    <p style="color:#64748b;margin:4px 0 0;">列表为空时显示插图和引导文字</p>
+  </div>
+
+  <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+    <strong>🔒 未登录保护</strong>
+    <p style="color:#64748b;margin:4px 0 0;">上传、审核、个人中心页检测登录态，未登录跳转登录页</p>
+  </div>
+
+</div>

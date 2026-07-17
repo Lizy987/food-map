@@ -1,0 +1,66 @@
+<h2>美食地图 — 整体架构</h2>
+<p class="subtitle">方案 C：混合渐进 / MVP 阶段</p>
+
+<div class="section">
+  <h3>系统分层</h3>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr;gap:24px;max-width:640px;margin:0 auto;">
+
+  <!-- 前端层 -->
+  <div style="border:2px solid var(--accent, #3b82f6);border-radius:12px;padding:20px;">
+    <div class="label" style="color:var(--accent, #3b82f6);">📱 前端 — React + Vite + TypeScript</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+      <span style="background:#e0e7ff;color:#3730a3;padding:4px 10px;border-radius:6px;font-size:0.85em;">高德地图 JS API 2.0</span>
+      <span style="background:#e0e7ff;color:#3730a3;padding:4px 10px;border-radius:6px;font-size:0.85em;">Tailwind CSS</span>
+      <span style="background:#e0e7ff;color:#3730a3;padding:4px 10px;border-radius:6px;font-size:0.85em;">React Router</span>
+      <span style="background:#e0e7ff;color:#3730a3;padding:4px 10px;border-radius:6px;font-size:0.85em;">Zustand 状态管理</span>
+    </div>
+    <p style="margin-top:8px;font-size:0.9em;color:#64748b;">适配移动端，H5 响应式，地图+列表混合布局</p>
+  </div>
+
+  <!-- 后端层 -->
+  <div style="border:2px solid var(--accent, #10b981);border-radius:12px;padding:20px;">
+    <div class="label" style="color:#10b981;">⚙️ 后端 — Bun + Hono + TypeScript</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+      <span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:6px;font-size:0.85em;">RESTful API</span>
+      <span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:6px;font-size:0.85em;">JWT 认证</span>
+      <span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:6px;font-size:0.85em;">文件上传处理</span>
+      <span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:6px;font-size:0.85em;">审核状态机</span>
+    </div>
+    <p style="margin-top:8px;font-size:0.9em;color:#64748b;">单一进程，零配置，SQLite 内嵌无需额外安装</p>
+  </div>
+
+  <!-- 数据层 -->
+  <div style="border:2px solid var(--accent, #f59e0b);border-radius:12px;padding:20px;">
+    <div class="label" style="color:#f59e0b;">💾 数据层</div>
+    <div style="display:flex;gap:16px;margin-top:12px;">
+      <div style="flex:1;text-align:center;background:#fffbeb;padding:12px;border-radius:8px;">
+        <strong>SQLite</strong>
+        <p style="font-size:0.85em;color:#92400e;">菜品、用户、审核记录</p>
+      </div>
+      <div style="flex:1;text-align:center;background:#fffbeb;padding:12px;border-radius:8px;">
+        <strong>本地磁盘</strong>
+        <p style="font-size:0.85em;color:#92400e;">图片文件存储</p>
+      </div>
+      <div style="flex:1;text-align:center;background:#fffbeb;padding:12px;border-radius:8px;">
+        <strong>→ 阿里云 OSS</strong>
+        <p style="font-size:0.85em;color:#92400e;">上线阶段切换</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 部署 -->
+  <div style="border:2px dashed #94a3b8;border-radius:12px;padding:20px;">
+    <div class="label" style="color:#64748b;">🚀 部署 — 单台轻量云服务器 + Docker</div>
+    <p style="margin-top:8px;font-size:0.9em;color:#64748b;">Nginx 反向代理 → Bun 进程，静态资源 CDN 加速</p>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>数据流概览</h3>
+  <div style="text-align:center;font-size:0.9em;line-height:2;">
+    📸<strong>上传</strong> → 🛡️<strong>审核队列</strong> → ✅<strong>通过/拒绝</strong> → 🗺️<strong>地图展示</strong> → ❤️<strong>用户发现</strong>
+  </div>
+</div>
