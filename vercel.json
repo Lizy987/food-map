@@ -7,7 +7,7 @@
   ],
   "functions": {
     "api/[[route]].ts": {
-      "runtime": "nodejs@20.x",
+      "runtime": "nodejs22.x",
       "memory": 256,
       "maxDuration": 10
     }
