@@ -189,21 +189,34 @@
 |---|---|---|
 | 前端框架 | React 18 + Vite + TypeScript | SPA，移动端适配 |
 | UI 样式 | Tailwind CSS | 原子化 CSS |
-| 地图 SDK | **Leaflet + OpenStreetMap** | 完全免费，无需 API Key，无请求限制 |
+| 地图 SDK | **Leaflet + 天地图（Tianditu）** | 国家测绘局官方，国内覆盖优于 OSM，免费申请 Key，个人日调用量 10 万次 |
 | 后端运行时 | Bun + Hono | 高性能 JS 运行时，轻量 Web 框架 |
 | 数据库 | SQLite (better-sqlite3) | 零配置，单文件 |
 | 文件存储 | 本地磁盘 `uploads/` | 图片直存本地 |
 | 运行方式 | `bun run dev` / `bun run start` | 本地进程，无需 Docker |
 
-### 5.1 Leaflet vs 高德 对比
+### 5.1 天地图 vs 其他国内服务 对比
 
-| 维度 | 高德 JS API | Leaflet + OSM |
-|---|---|---|
-| API Key | 需要申请 | **不需要** |
-| 费用 | 免费额度有限 | 完全免费 |
-| 国内道路/建筑细节 | 优秀 | 尚可（城市覆盖 OK） |
-| 逆地理编码 | 内置 | 无（本产品不需要） |
-| 离线使用 | 不支持 | 可预缓存瓦片 |
+| 维度 | 天地图（推荐） | OpenStreetMap | 高德 JS API |
+|---|---|---|---|
+| API Key | 需免费申请 | **不需要** | 需申请 |
+| 费用 | 个人免费（日 10 万次） | 完全免费 | 免费额度有限 |
+| 国内道路/建筑细节 | **优秀**（官方测绘数据） | 一般（城市覆盖尚可） | 优秀 |
+| 逆地理编码 | 需额外申请 | 无（本产品不需要） | 内置 |
+| 与 Leaflet 集成 | 直接拼接瓦片 URL | 原生支持 | 需专用 SDK |
+| 瓦片加载速度（国内） | **快**（国内 CDN） | 慢/不稳定 | 快 |
+
+**决策**：使用 Leaflet 作为地图框架 + 天地图瓦片作为底图。Leaflet 负责交互层（标记、弹窗、点击事件），天地图提供底图瓦片。在 `leaflet` 基础上**无需额外 SDK**，直接使用天地图 WMTS 瓦片 URL 即可。
+
+```js
+// 天地图瓦片 URL 格式（需替换 YOUR_KEY）
+L.tileLayer('https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=YOUR_KEY', {
+  subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
+  maxZoom: 18,
+})
+```
+
+**申请 Key**：访问 [天地图注册页](https://console.tianditu.gov.cn/) 注册并创建应用，选择"浏览器端"类型，获取 `tk` 参数值。
 
 ---
 
@@ -229,7 +242,7 @@
 
 - 图片上传失败 → 不创建记录，提示重试
 - 数据库写入失败 → 返回 500，前端展示错误提示
-- OSM 瓦片加载失败 → 地图区域显示重试按钮
+- 天地图瓦片加载失败 → 显示提示并回退到 OSM 底图
 - 编辑时图片未更换 → 保留原图路径不变
 
 ### 6.4 安全（本地运行，基础防护）
@@ -288,9 +301,10 @@
 
 ### 7.5 地图标记样式
 
-- 默认：Leaflet 默认标记 或 自定义橙色圆点
+- 默认：Leaflet 默认标记或自定义橙色圆点（内联 SVG，无需外部图标文件）
 - 点击态：弹出气泡显示菜名
-- 聚合：20+ 个相近点时合并展示数量（Leaflet.markercluster 插件）
+- 聚合：20+ 个相近点时合并展示数量（Leaflet.markercluster 插件，可选）
+- 底图：天地图矢量瓦片（vec_w），可叠加文字注记层（cva_w）
 
 ---
 
@@ -298,7 +312,7 @@
 
 | # | 事项 | 结论 |
 |---|---|---|
-| 1 | 地图服务选型 | ✅ Leaflet + OpenStreetMap，无需 API Key |
+| 1 | 地图服务选型 | ✅ Leaflet + 天地图瓦片，免费申请 Key，国内加载速度和覆盖均优于 OSM |
 | 2 | 部署方式 | ✅ 本地运行，`bun run` 启动 |
 | 3 | 域名与备案 | ✅ 不需要 |
 | 4 | 数据导出 | ✅ 支持 CSV 导出 |
