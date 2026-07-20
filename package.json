@@ -7,12 +7,9 @@
     "dev:server": "bun --watch server/index.ts",
     "dev:client": "vite --host",
     "build": "vite build",
-    "vercel-build": "vite build",
     "start": "NODE_ENV=production bun run server/index.ts"
   },
   "dependencies": {
-    "@libsql/client": "^0.14.0",
-    "@vercel/blob": "^0.27.0",
     "hono": "^4.6.0",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
@@ -22,7 +19,6 @@
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.12",
-    "@types/node": "^26.1.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
