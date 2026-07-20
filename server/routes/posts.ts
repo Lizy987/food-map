@@ -3,8 +3,8 @@
  */
 import { Hono } from 'hono';
 import { z } from 'zod';
-import fs from 'fs';
-import { getDb } from '../db';
+import { del } from '@vercel/blob';
+import { getRows, getRow, run } from '../db';
 import { generateId } from '../lib/uuid';
 import { toCsv } from '../lib/csv';
 import { CATEGORIES } from './categories';
@@ -30,20 +30,20 @@ const router = new Hono();
 
 // ── GET /api/posts — 列表查询（支持 ?category= 筛选）─────────
 
-router.get('/', (c) => {
+router.get('/', async (c) => {
   try {
-    const db = getDb();
     const category = c.req.query('category');
 
     let rows;
     if (category && CATEGORIES.includes(category as any)) {
-      rows = db
-        .query('SELECT * FROM food_posts WHERE category = ? ORDER BY created_at DESC')
-        .all(category);
+      rows = await getRows(
+        'SELECT * FROM food_posts WHERE category = ? ORDER BY created_at DESC',
+        [category]
+      );
     } else {
-      rows = db
-        .query('SELECT * FROM food_posts ORDER BY created_at DESC')
-        .all();
+      rows = await getRows(
+        'SELECT * FROM food_posts ORDER BY created_at DESC'
+      );
     }
 
     return c.json({ data: rows });
@@ -56,14 +56,13 @@ router.get('/', (c) => {
 // ── GET /api/posts/export/csv — CSV 导出 ─────────────────────
 // 注意：此路由必须在 /:id 之前注册
 
-router.get('/export/csv', (c) => {
+router.get('/export/csv', async (c) => {
   try {
-    const db = getDb();
-    const rows = db
-      .query('SELECT * FROM food_posts ORDER BY created_at DESC')
-      .all();
+    const rows = await getRows(
+      'SELECT * FROM food_posts ORDER BY created_at DESC'
+    );
 
-    const csvContent = toCsv(rows as Record<string, unknown>[]);
+    const csvContent = toCsv(rows);
 
     return new Response('﻿' + csvContent, {
       headers: {
@@ -79,11 +78,10 @@ router.get('/export/csv', (c) => {
 
 // ── GET /api/posts/:id — 单条详情 ────────────────────────────
 
-router.get('/:id', (c) => {
+router.get('/:id', async (c) => {
   try {
-    const db = getDb();
     const id = c.req.param('id');
-    const post = db.query('SELECT * FROM food_posts WHERE id = ?').get(id);
+    const post = await getRow('SELECT * FROM food_posts WHERE id = ?', [id]);
 
     if (!post) {
       return c.json({ error: { code: 404, message: '记录不存在' } }, 404);
@@ -113,14 +111,13 @@ router.post('/', async (c) => {
     }
 
     const data = parsed.data;
-    const db = getDb();
     const id = generateId();
     const now = new Date()
       .toISOString()
       .replace('T', ' ')
       .substring(0, 19);
 
-    db.run(
+    await run(
       `INSERT INTO food_posts
         (id, dish_name, store_name, category, address, image_url, latitude, longitude, note, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -140,12 +137,15 @@ router.post('/', async (c) => {
     );
 
     // 返回刚创建的记录
-    const post = db.query('SELECT * FROM food_posts WHERE id = ?').get(id);
+    const post = await getRow('SELECT * FROM food_posts WHERE id = ?', [id]);
 
     return c.json({ data: post }, 201);
   } catch (err) {
     console.error('创建记录失败:', err);
-    return c.json({ error: { code: 500, message: '创建失败，请重试' } }, 500);
+    return c.json(
+      { error: { code: 500, message: '创建失败，请重试' } },
+      500
+    );
   }
 });
 
@@ -166,12 +166,11 @@ router.put('/:id', async (c) => {
       );
     }
 
-    const db = getDb();
-
     // 检查记录是否存在
-    const existing = db
-      .query('SELECT * FROM food_posts WHERE id = ?')
-      .get(id);
+    const existing = await getRow(
+      'SELECT * FROM food_posts WHERE id = ?',
+      [id]
+    );
     if (!existing) {
       return c.json({ error: { code: 404, message: '记录不存在' } }, 404);
     }
@@ -182,7 +181,7 @@ router.put('/:id', async (c) => {
       .replace('T', ' ')
       .substring(0, 19);
 
-    db.run(
+    await run(
       `UPDATE food_posts SET
          dish_name = ?, store_name = ?, category = ?, address = ?,
          image_url = ?, latitude = ?, longitude = ?, note = ?,
@@ -202,49 +201,58 @@ router.put('/:id', async (c) => {
       ]
     );
 
-    const updated = db.query('SELECT * FROM food_posts WHERE id = ?').get(id);
+    const updated = await getRow(
+      'SELECT * FROM food_posts WHERE id = ?',
+      [id]
+    );
 
     return c.json({ data: updated });
   } catch (err) {
     console.error('更新记录失败:', err);
-    return c.json({ error: { code: 500, message: '更新失败，请重试' } }, 500);
+    return c.json(
+      { error: { code: 500, message: '更新失败，请重试' } },
+      500
+    );
   }
 });
 
-// ── DELETE /api/posts/:id — 删除记录（含图片文件）─────────────
+// ── DELETE /api/posts/:id — 删除记录（含 Blob 图片）──────────
 
 router.delete('/:id', async (c) => {
   try {
-    const db = getDb();
     const id = c.req.param('id');
 
-    // 查找记录（获取图片路径）
-    const post = db
-      .query('SELECT * FROM food_posts WHERE id = ?')
-      .get(id) as Record<string, unknown> | null;
+    // 查找记录（获取图片 URL）
+    const post = await getRow(
+      'SELECT * FROM food_posts WHERE id = ?',
+      [id]
+    );
 
     if (!post) {
       return c.json({ error: { code: 404, message: '记录不存在' } }, 404);
     }
 
-    // 删除关联图片文件
+    // 删除 Vercel Blob 上的图片
     try {
-      const imagePath = `.${post.image_url}`;
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-        console.log('已删除图片文件:', imagePath);
+      const imageUrl = post.image_url as string;
+      if (imageUrl) {
+        await del(imageUrl);
+        console.log('已删除 Blob 图片:', imageUrl);
       }
     } catch (imgErr) {
-      console.error('删除图片文件失败:', imgErr);
+      console.error('删除 Blob 图片失败:', imgErr);
     }
 
     // 删除数据库记录
-    db.run('DELETE FROM food_posts WHERE id = ?', [id]);
+    await run('DELETE FROM food_posts WHERE id = ?', [id]);
 
     return c.json({ data: { success: true } });
   } catch (err) {
     console.error('删除记录失败:', err);
-    return c.json({ error: { code: 500, message: '删除失败，请重试' } }, 500);
+    return c.json(
+      { error: { code: 500, message: '删除失败，请重试' } },
+      500
+    );
   }
 });
 

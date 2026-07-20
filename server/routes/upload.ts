@@ -1,11 +1,9 @@
 /**
  * POST /api/upload — 图片上传
- * 校验文件类型和大小，保存到 uploads/ 目录
+ * 校验文件类型和大小，上传到 Vercel Blob
  */
 import { Hono } from 'hono';
-import path from 'path';
-import fs from 'fs';
-import { generateId } from '../lib/uuid';
+import { put } from '@vercel/blob';
 
 const router = new Hono();
 
@@ -42,25 +40,21 @@ router.post('/', async (c) => {
 
     // 生成唯一文件名
     const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-    const filename = `${generateId()}.${ext}`;
+    const filename = `${crypto.randomUUID()}.${ext}`;
 
-    // 确保 uploads 目录存在
-    const uploadsDir = path.join(import.meta.dir, '..', '..', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    // 上传到 Vercel Blob
+    const blob = await put(filename, file, {
+      access: 'public',
+      addRandomSuffix: true,
+    });
 
-    // 写入文件
-    const filepath = path.join(uploadsDir, filename);
-    const buffer = await file.arrayBuffer();
-    await Bun.write(filepath, new Uint8Array(buffer));
-
-    // 返回访问 URL
-    const url = `/uploads/${filename}`;
-    return c.json({ data: { url } }, 201);
+    return c.json({ data: { url: blob.url } }, 201);
   } catch (err) {
     console.error('上传失败:', err);
-    return c.json({ error: { code: 500, message: '图片上传失败，请重试' } }, 500);
+    return c.json(
+      { error: { code: 500, message: '图片上传失败，请重试' } },
+      500
+    );
   }
 });
 
