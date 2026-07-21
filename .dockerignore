@@ -1,0 +1,30 @@
+# 依赖（在镜像内重新安装）
+node_modules
+
+# 构建产物（在镜像内重新构建）
+dist
+
+# 运行时数据（通过 Docker volume 挂载）
+data
+uploads
+
+# Git
+.git
+.gitignore
+
+# 文档 & 图片
+*.md
+docs
+1.png
+2.png
+3.png
+4.png
+map.png
+
+# 环境配置
+.env
+.env.example
+
+# IDE
+.vscode
+.idea
