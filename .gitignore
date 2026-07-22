@@ -7,3 +7,4 @@ uploads/
 .env
 logs/
 data/*.db-wal
+data/*.db-shm
