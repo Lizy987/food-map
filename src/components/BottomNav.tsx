@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 /** 底部导航栏：首页 | 上传 | 我的 */
 export default function BottomNav() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -55,29 +55,23 @@ export default function BottomNav() {
 
       {/* 我的 / 登录 */}
       {user ? (
-        <div className="relative group">
-          <button
-            onClick={logout}
-            className={linkClass('/login') + ' cursor-pointer'}
-            title="点击退出"
+        <NavLink to="/profile" className={linkClass('/profile')}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6 mb-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6 mb-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-            <span className="truncate max-w-[4rem]">{user.username}</span>
-          </button>
-        </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+          <span className="truncate max-w-[4rem]">{user.username}</span>
+        </NavLink>
       ) : (
         <NavLink to="/login" className={linkClass('/login')}>
           <svg

@@ -6,6 +6,7 @@ import UploadPage from './pages/UploadPage';
 import DetailPage from './pages/DetailPage';
 import EditPage from './pages/EditPage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/food/:id" element={<DetailPage />} />
           <Route path="/food/:id/edit" element={<EditPage />} />
