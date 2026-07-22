@@ -1,8 +1,8 @@
 /**
  * API 请求封装
- * 统一错误处理，支持 JSON 和文件上传
+ * 统一错误处理 + 自动携带认证 token
  */
-import type { ApiError, ApiResponse } from '../types';
+import type { ApiError } from '../types';
 
 /** 基础请求方法 */
 async function request<T>(
@@ -10,12 +10,16 @@ async function request<T>(
   path: string,
   body?: unknown
 ): Promise<T> {
+  const token = localStorage.getItem('token');
+
   const options: RequestInit = {
     method,
-    headers:
-      body instanceof FormData
+    headers: {
+      ...(body instanceof FormData
         ? {}
-        : { 'Content-Type': 'application/json' },
+        : { 'Content-Type': 'application/json' }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body:
       body instanceof FormData
         ? body
@@ -35,6 +39,11 @@ async function request<T>(
   const data = await res.json();
 
   if (!res.ok) {
+    // 401 → 清除过期 token
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
     const err = data as ApiError;
     throw new Error(err.error?.message || `请求失败 (${res.status})`);
   }

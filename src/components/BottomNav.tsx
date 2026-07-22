@@ -1,8 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
-/** 底部导航栏：首页 | 上传 */
+/** 底部导航栏：首页 | 上传 | 我的 */
 export default function BottomNav() {
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -13,6 +15,7 @@ export default function BottomNav() {
 
   return (
     <nav className="flex items-center justify-around h-14 bg-white border-t border-gray-200 safe-bottom">
+      {/* 首页 */}
       <NavLink to="/" className={linkClass('/')}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -30,6 +33,8 @@ export default function BottomNav() {
         </svg>
         <span>首页</span>
       </NavLink>
+
+      {/* 上传 */}
       <NavLink to="/upload" className={linkClass('/upload')}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -47,6 +52,51 @@ export default function BottomNav() {
         </svg>
         <span>上传</span>
       </NavLink>
+
+      {/* 我的 / 登录 */}
+      {user ? (
+        <div className="relative group">
+          <button
+            onClick={logout}
+            className={linkClass('/login') + ' cursor-pointer'}
+            title="点击退出"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6 mb-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+            <span className="truncate max-w-[4rem]">{user.username}</span>
+          </button>
+        </div>
+      ) : (
+        <NavLink to="/login" className={linkClass('/login')}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6 mb-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+          <span>登录</span>
+        </NavLink>
+      )}
     </nav>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * 详情页 — 大图 + 信息 + 小地图 + 编辑/删除操作
+ * 详情页 — 大图 + 信息 + 小地图 + 编辑/删除操作（仅 owner 可见）
  */
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,10 +8,12 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { usePost } from '../hooks/usePosts';
 import { api } from '../lib/api';
 import { showToast } from '../lib/toast';
+import { useAuth } from '../hooks/useAuth';
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { post, loading, error } = usePost(id);
   const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -60,6 +62,9 @@ export default function DetailPage() {
     );
   }
 
+  // 是否是这条帖子的发布者
+  const isOwner = user && post.user_id && post.user_id === user.id;
+
   return (
     <div className="flex flex-col h-full">
       {/* 可滚动内容 */}
@@ -94,6 +99,11 @@ export default function DetailPage() {
             <span className="text-sm">🏪 {post.store_name}</span>
           </div>
 
+          {/* 发布者 */}
+          <div className="text-xs text-gray-400">
+            👤 由 {post.user_id ? '用户' : '匿名用户'}发布
+          </div>
+
           {/* 地址 */}
           <div className="flex items-start gap-2 text-gray-500">
             <span className="text-sm mt-0.5">📍</span>
@@ -121,21 +131,23 @@ export default function DetailPage() {
         </div>
       </div>
 
-      {/* 底部操作栏 */}
-      <div className="flex-shrink-0 flex gap-3 px-4 py-3 bg-white border-t border-gray-100 safe-bottom">
-        <button
-          onClick={() => navigate(`/food/${post.id}/edit`)}
-          className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-medium active:bg-orange-600 transition-colors"
-        >
-          ✏️ 编辑
-        </button>
-        <button
-          onClick={() => setShowDelete(true)}
-          className="flex-1 py-2.5 border border-gray-200 text-danger rounded-lg text-sm font-medium active:bg-red-50 transition-colors"
-        >
-          🗑️ 删除
-        </button>
-      </div>
+      {/* 底部操作栏 — 仅 owner 可见 */}
+      {isOwner && (
+        <div className="flex-shrink-0 flex gap-3 px-4 py-3 bg-white border-t border-gray-100 safe-bottom">
+          <button
+            onClick={() => navigate(`/food/${post.id}/edit`)}
+            className="flex-1 py-2.5 bg-primary text-white rounded-lg text-sm font-medium active:bg-orange-600 transition-colors"
+          >
+            ✏️ 编辑
+          </button>
+          <button
+            onClick={() => setShowDelete(true)}
+            className="flex-1 py-2.5 border border-gray-200 text-danger rounded-lg text-sm font-medium active:bg-red-50 transition-colors"
+          >
+            🗑️ 删除
+          </button>
+        </div>
+      )}
 
       {/* 删除确认弹窗 */}
       <ConfirmDialog

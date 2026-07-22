@@ -7,6 +7,7 @@ import fs from 'fs';
 import { getDb } from '../db';
 import { generateId } from '../lib/uuid';
 import { toCsv } from '../lib/csv';
+import { authMiddleware } from '../lib/auth';
 import { CATEGORIES } from './categories';
 
 // ── Zod 校验 Schema ────────────────────────────────────────
@@ -28,7 +29,7 @@ const updateSchema = createSchema;
 
 const router = new Hono();
 
-// ── GET /api/posts — 列表查询（支持 ?category= 筛选）─────────
+// ── GET /api/posts — 列表查询（公开）───────────────────────
 
 router.get('/', (c) => {
   try {
@@ -53,8 +54,7 @@ router.get('/', (c) => {
   }
 });
 
-// ── GET /api/posts/export/csv — CSV 导出 ─────────────────────
-// 注意：此路由必须在 /:id 之前注册
+// ── GET /api/posts/export/csv — CSV 导出（公开）────────────
 
 router.get('/export/csv', (c) => {
   try {
@@ -77,7 +77,7 @@ router.get('/export/csv', (c) => {
   }
 });
 
-// ── GET /api/posts/:id — 单条详情 ────────────────────────────
+// ── GET /api/posts/:id — 单条详情（公开）───────────────────
 
 router.get('/:id', (c) => {
   try {
@@ -96,10 +96,11 @@ router.get('/:id', (c) => {
   }
 });
 
-// ── POST /api/posts — 创建记录 ───────────────────────────────
+// ── POST /api/posts — 创建记录（需登录）─────────────────────
 
-router.post('/', async (c) => {
+router.post('/', authMiddleware, async (c) => {
   try {
+    const userId = c.get('userId') as string;
     const body = await c.req.json();
 
     // Zod 校验
@@ -122,8 +123,8 @@ router.post('/', async (c) => {
 
     db.run(
       `INSERT INTO food_posts
-        (id, dish_name, store_name, category, address, image_url, latitude, longitude, note, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, dish_name, store_name, category, address, image_url, latitude, longitude, note, user_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.dish_name,
@@ -134,12 +135,12 @@ router.post('/', async (c) => {
         data.latitude,
         data.longitude,
         data.note || '',
+        userId,
         now,
         now,
       ]
     );
 
-    // 返回刚创建的记录
     const post = db.query('SELECT * FROM food_posts WHERE id = ?').get(id);
 
     return c.json({ data: post }, 201);
@@ -149,12 +150,28 @@ router.post('/', async (c) => {
   }
 });
 
-// ── PUT /api/posts/:id — 更新记录 ────────────────────────────
+// ── PUT /api/posts/:id — 更新记录（仅 owner）────────────────
 
-router.put('/:id', async (c) => {
+router.put('/:id', authMiddleware, async (c) => {
   try {
+    const userId = c.get('userId') as string;
     const id = c.req.param('id');
     const body = await c.req.json();
+
+    const db = getDb();
+
+    // 检查记录是否存在 + 所有权
+    const existing = db
+      .query('SELECT * FROM food_posts WHERE id = ?')
+      .get(id) as Record<string, unknown> | null;
+
+    if (!existing) {
+      return c.json({ error: { code: 404, message: '记录不存在' } }, 404);
+    }
+
+    if (existing.user_id && existing.user_id !== userId) {
+      return c.json({ error: { code: 403, message: '只能编辑自己上传的美食' } }, 403);
+    }
 
     // Zod 校验
     const parsed = updateSchema.safeParse(body);
@@ -164,16 +181,6 @@ router.put('/:id', async (c) => {
         { error: { code: 400, message: firstError.message } },
         400
       );
-    }
-
-    const db = getDb();
-
-    // 检查记录是否存在
-    const existing = db
-      .query('SELECT * FROM food_posts WHERE id = ?')
-      .get(id);
-    if (!existing) {
-      return c.json({ error: { code: 404, message: '记录不存在' } }, 404);
     }
 
     const data = parsed.data;
@@ -211,20 +218,25 @@ router.put('/:id', async (c) => {
   }
 });
 
-// ── DELETE /api/posts/:id — 删除记录（含图片文件）─────────────
+// ── DELETE /api/posts/:id — 删除记录（仅 owner）─────────────
 
-router.delete('/:id', async (c) => {
+router.delete('/:id', authMiddleware, async (c) => {
   try {
+    const userId = c.get('userId') as string;
     const db = getDb();
     const id = c.req.param('id');
 
-    // 查找记录（获取图片路径）
+    // 查找记录（获取图片路径 + 所有权）
     const post = db
       .query('SELECT * FROM food_posts WHERE id = ?')
       .get(id) as Record<string, unknown> | null;
 
     if (!post) {
       return c.json({ error: { code: 404, message: '记录不存在' } }, 404);
+    }
+
+    if (post.user_id && post.user_id !== userId) {
+      return c.json({ error: { code: 403, message: '只能删除自己上传的美食' } }, 403);
     }
 
     // 删除关联图片文件

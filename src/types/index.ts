@@ -1,3 +1,17 @@
+/** 用户 */
+export interface User {
+  id: string;
+  username: string;
+}
+
+/** 认证响应 */
+export interface AuthResponse {
+  data: {
+    user: User;
+    token: string;
+  };
+}
+
 /** 美食记录 */
 export interface Post {
   id: string;
@@ -9,6 +23,7 @@ export interface Post {
   latitude: number;
   longitude: number;
   note: string;
+  user_id?: string | null;
   created_at: string;
   updated_at: string;
 }

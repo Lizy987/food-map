@@ -33,8 +33,19 @@ export function getDb(): Database {
   return db;
 }
 
-/** 建表 + 索引 */
+/** 建表 + 索引 + 兼容迁移 */
 function initSchema() {
+  // ── 用户表 ──
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id            TEXT PRIMARY KEY,
+      username      TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at    TEXT DEFAULT (datetime('now', 'localtime'))
+    )
+  `);
+
+  // ── 帖子表 ──
   db.run(`
     CREATE TABLE IF NOT EXISTS food_posts (
       id         TEXT PRIMARY KEY,
@@ -46,10 +57,18 @@ function initSchema() {
       latitude   REAL NOT NULL,
       longitude  REAL NOT NULL,
       note       TEXT DEFAULT '',
+      user_id    TEXT,
       created_at TEXT DEFAULT (datetime('now', 'localtime')),
       updated_at TEXT DEFAULT (datetime('now', 'localtime'))
     )
   `);
+
+  // 兼容迁移：旧表没有 user_id 列
+  try {
+    db.run('ALTER TABLE food_posts ADD COLUMN user_id TEXT');
+  } catch {
+    // 列已存在则忽略
+  }
 
   db.run(`
     CREATE INDEX IF NOT EXISTS idx_posts_category
@@ -64,6 +83,11 @@ function initSchema() {
   db.run(`
     CREATE INDEX IF NOT EXISTS idx_posts_coords
     ON food_posts(latitude, longitude)
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_posts_user
+    ON food_posts(user_id)
   `);
 }
 

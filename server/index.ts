@@ -11,6 +11,7 @@ import postsRoute from './routes/posts';
 import uploadRoute from './routes/upload';
 import categoriesRoute from './routes/categories';
 import tilesRoute from './routes/tiles';
+import authRoute from './routes/auth';
 
 const app = new Hono();
 
@@ -23,6 +24,7 @@ app.route('/api/posts', postsRoute);
 app.route('/api/upload', uploadRoute);
 app.route('/api/categories', categoriesRoute);
 app.route('/api/tiles', tilesRoute);
+app.route('/api/auth', authRoute);
 
 // ── 静态文件：上传的图片 ──
 app.use('/uploads/*', serveStatic({ root: './' }));
