@@ -5,3 +5,5 @@ uploads/
 *.db
 *.db-journal
 .env
+logs/
+data/*.db-wal
